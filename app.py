@@ -1,14 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 import csv
 from io import StringIO
-from collections import Counter
 
 app = Flask(__name__)
 
-# 데이터 저장소 (실제 서비스라면 DB를 쓰겠지만, 현재는 메모리 저장)
+# 데이터 저장소 (Vercel에서는 재배포/슬립 시 초기화됨)
 student_submissions = {}
 
-# 교육과정 편성안 데이터
+# KIS 교과과정 데이터
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -47,7 +46,6 @@ def select_subjects():
     student_id = request.form.get('student_id')
     student_name = request.form.get('student_name')
     subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    # 11학년 28학점(택7), 12학년 32학점(택8)
     target_credit = 28 if grade == "11" else 32
     return render_template('select.html', grade=grade, semester=semester, 
                            student_id=student_id, student_name=student_name, 
@@ -61,10 +59,11 @@ def submit():
     semester = request.form.get('semester')
     selected_list = request.form.getlist('selected_subjects')
     
-    student_submissions[student_id] = {
-        'name': student_name, 'grade': grade, 'semester': semester,
-        'subjects': selected_list, 'total_credits': len(selected_list) * 4
-    }
+    if student_id:
+        student_submissions[student_id] = {
+            'name': student_name, 'grade': grade, 'semester': semester,
+            'subjects': selected_list, 'total_credits': len(selected_list) * 4
+        }
     return redirect(url_for('result', student_id=student_id))
 
 @app.route('/result/<student_id>')
@@ -72,25 +71,32 @@ def result(student_id):
     data = student_submissions.get(student_id, {})
     return render_template('result.html', data=data)
 
-# --- 선생님용 관리자 대시보드 ---
+# --- 어드민 & 반 편성 통합 ---
 @app.route('/admin')
 def admin():
-    # 과목별 인원 통계 계산
-    all_selected_subjects = []
-    for info in student_submissions.values():
-        all_selected_subjects.extend(info['subjects'])
-    subject_counts = Counter(all_selected_subjects)
+    # 데이터가 없을 때를 대비해 기본값 설정
+    return render_template('admin.html', all_submissions=student_submissions, class_results=None)
+
+@app.route('/assign_classes', methods=['POST'])
+def assign_classes():
+    class_assignments = {}
+    if student_submissions:
+        for sid, info in student_submissions.items():
+            for subject in info['subjects']:
+                if subject not in class_assignments:
+                    class_assignments[subject] = []
+                class_assignments[subject].append(f"{info['name']}({sid})")
     
     return render_template('admin.html', 
                            all_submissions=student_submissions, 
-                           subject_counts=subject_counts)
+                           class_results=class_assignments)
 
 @app.route('/download_excel')
 def download_excel():
     si = StringIO()
     si.write('\ufeff')
     cw = csv.writer(si)
-    cw.writerow(['학번', '이름', '학년', '학기', '신청과목', '총학점'])
+    cw.writerow(['학번', '이름', '학년', '학기', '선택과목', '총학점'])
     for sid, info in student_submissions.items():
         cw.writerow([sid, info['name'], info['grade'], info['semester'], ", ".join(info['subjects']), info['total_credits']])
     output = make_response(si.getvalue())
@@ -98,28 +104,5 @@ def download_excel():
     output.headers["Content-type"] = "text/csv"
     return output
 
-
-
-
-# ... (기존 상단 코드는 동일)
-
-# --- 반 편성 로직 (추가된 부분) ---
-@app.route('/assign_classes', methods=['POST'])
-def assign_classes():
-    # 과목별로 학생들을 그룹화 { 과목명: [학생이름, 학생이름...] }
-    class_assignments = {}
-    
-    for sid, info in student_submissions.items():
-        for subject in info['subjects']:
-            if subject not in class_assignments:
-                class_assignments[subject] = []
-            class_assignments[subject].append(f"{info['name']}({sid})")
-            
-    return render_template('admin.html', 
-                           all_submissions=student_submissions, 
-                           class_results=class_assignments)
-
-# --- 엑셀 다운로드 등 나머지 코드 유지 ---
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)

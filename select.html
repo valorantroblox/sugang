@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIS 과목 선택</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --kis-navy: #002d5d; /* KIS 메인 남색 */
+            --kis-gold: #c5a059; /* KIS 메인 금색 */
+            --kis-bg: #f8f9fa;
+        }
+
+        body { 
+            background-color: var(--kis-bg); 
+            font-family: 'Pretendard', sans-serif;
+            padding-bottom: 120px; 
+        }
+
+        /* 상단 헤더 */
+        .header-section {
+            background: white;
+            padding: 25px 0;
+            border-bottom: 4px solid var(--kis-navy);
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .header-logo { max-width: 220px; margin-bottom: 10px; }
+
+        /* 카테고리 그룹 */
+        .category-box { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 25px; 
+            margin-bottom: 30px; 
+            border-left: 6px solid var(--kis-gold); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        .category-title {
+            color: var(--kis-navy);
+            font-weight: 800;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+        }
+
+        /* 과목 선택 카드 */
+        .subject-card { 
+            border: 1.5px solid #eee; 
+            border-radius: 12px; 
+            padding: 20px; 
+            cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            text-align: center; 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 90px;
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+        .subject-card:hover {
+            border-color: var(--kis-gold);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        /* 체크 시 스타일 변화 */
+        .btn-check:checked + .subject-card { 
+            background-color: #f0f4f8; 
+            border-color: var(--kis-navy); 
+            color: var(--kis-navy); 
+            box-shadow: inset 0 0 0 2px var(--kis-navy);
+        }
+
+        /* 하단 학점 표시 바 */
+        .fixed-bottom-bar { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 20px 0; 
+            border-top: 3px solid var(--kis-navy); 
+            z-index: 1000; 
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); 
+        }
+
+        .credit-display {
+            font-size: 1.15rem;
+            color: var(--kis-navy);
+        }
+        .credit-number {
+            color: var(--kis-gold);
+            font-size: 1.8rem;
+            margin: 0 5px;
+        }
+
+        .btn-kis-submit {
+            background-color: var(--kis-navy);
+            border: none;
+            padding: 12px 50px;
+            font-weight: bold;
+            border-radius: 8px;
+            color: white;
+            transition: 0.3s;
+        }
+        .btn-kis-submit:hover {
+            background-color: #001d3d;
+            color: var(--kis-gold);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body data-target-credit="{{ target_credit }}">
+
+    <div class="header-section">
+        <div class="container">
+            <img src="https://lh6.googleusercontent.com/proxy/jJIIEXohn2xFoj2rJ7DV5jnkNvSjkFiC9h935hqCYxekgLtKgp8pe9oEZ8vhb7oElBFQNggIAwQYXRemyLQYUQagLgxRSZw" alt="KIS Logo" class="header-logo">
+            <h3 class="fw-bold mt-2" style="color: var(--kis-navy);">{{ grade }}학년 {{ semester }} 수강신청</h3>
+            <div class="badge bg-light text-dark p-2 px-3 border">
+                <span class="text-secondary">학생:</span> {{ student_name }} | <span class="text-secondary">학번:</span> {{ student_id }}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <form action="/submit" method="post" id="selectionForm">
+            <input type="hidden" name="student_id" value="{{ student_id }}">
+            <input type="hidden" name="student_name" value="{{ student_name }}">
+            <input type="hidden" name="grade" value="{{ grade }}">
+            <input type="hidden" name="semester" value="{{ semester }}">
+
+            {% for cat, list in subjects.items() %}
+            <div class="category-box">
+                <h5 class="category-title">📌 {{ cat }}</h5>
+                <div class="row row-cols-2 row-cols-md-3 g-3">
+                    {% set cat_idx = loop.index0 %}
+                    {% for sub in list %}
+                    <div class="col">
+                        <input type="checkbox" name="selected_subjects" value="{{ sub }}" class="btn-check" id="sub-{{ cat_idx }}-{{ loop.index0 }}" onchange="updateUI()">
+                        <label class="subject-card" for="sub-{{ cat_idx }}-{{ loop.index0 }}">{{ sub }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="fixed-bottom-bar">
+                <div class="container d-flex justify-content-between align-items-center">
+                    <div class="credit-display fw-bold">
+                        현재 선택: <span id="current-credit" class="credit-number">0</span> / {{ target_credit }} 학점
+                    </div>
+                    <button type="submit" class="btn btn-kis-submit btn-lg shadow">신청 완료</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function updateUI() {
+            const targetCredit = parseInt(document.body.getAttribute('data-target-credit'));
+            const checkedCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length;
+            
+            // 과목당 4학점 자동 계산
+            const currentCredit = checkedCount * 4;
+            const creditSpan = document.getElementById('current-credit');
+            creditSpan.innerText = currentCredit;
+            
+            // 학점 초과 시 경고 및 선택 취소
+            if (currentCredit > targetCredit) {
+                alert("최대 " + targetCredit + "학점까지만 선택할 수 있습니다.");
+                event.target.checked = false; 
+                creditSpan.innerText = currentCredit - 4;
+            }
+        }
+    </script>
+</body>
+</html>

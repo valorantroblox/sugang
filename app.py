@@ -104,5 +104,37 @@ def download_excel():
     output.headers["Content-type"] = "text/csv"
     return output
 
+
+@app.route('/select_subjects', methods=['POST'])
+def select_subjects():
+    # 폼에서 넘어온 데이터 안전하게 가져오기
+    grade = request.form.get('grade')
+    semester = request.form.get('semester')
+    student_id = request.form.get('student_id')
+    student_name = request.form.get('student_name')
+
+    # 데이터가 하나라도 없으면 다시 메인으로 돌려보내서 에러 방지
+    if not all([grade, semester, student_id, student_name]):
+        return redirect(url_for('index'))
+
+    # 학년/학기에 맞는 과목 리스트 가져오기
+    grade_data = SUBJECTS_DATA.get(grade, {})
+    subjects = grade_data.get(semester, {})
+
+    # 과목 데이터가 비어있을 경우 에러 방지
+    if not subjects:
+        return "선택 가능한 과목 데이터가 없습니다. 학년과 학기를 확인해주세요.", 400
+
+    # KIS 기준 학점 설정
+    target_credit = 28 if grade == "11" else 32
+
+    return render_template('select.html', 
+                           grade=grade, 
+                           semester=semester, 
+                           student_id=student_id, 
+                           student_name=student_name, 
+                           subjects=subjects, 
+                           target_credit=target_credit)
+
 if __name__ == '__main__':
     app.run(debug=True)

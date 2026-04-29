@@ -1,0 +1,125 @@
+from flask import Flask, render_template, request, redirect, url_for, make_response
+import csv
+from io import StringIO
+from collections import Counter
+
+app = Flask(__name__)
+
+# 데이터 저장소 (실제 서비스라면 DB를 쓰겠지만, 현재는 메모리 저장)
+student_submissions = {}
+
+# 교육과정 편성안 데이터
+SUBJECTS_DATA = {
+    "11": {
+        "1학기": {
+            "기초/탐구": ["문학과 콘텐츠", "독서와 국어생활", "토론과 글쓰기", "대수", "미적분I", "Essential Academic Reading"],
+            "사회/과학": ["세계사", "사회와 문화", "윤리와 사상", "기후 변화와 지속 가능한 세계", "물리학I", "화학I", "생명과학I"],
+            "예술/기타": ["시/뉴미디어 문학", "미술 전공 실기 기초", "데이터 과학", "실용 베트남어"]
+        },
+        "2학기": {
+            "기초/탐구": ["주제 탐구 독서", "심화 국어", "삶과 글쓰기", "미디어와 비판적 사고", "확률과 통계", "미적분II"],
+            "사회/과학": ["현대사회와 윤리", "세계 시민과 지리", "경제", "정치", "물리적 실험", "화학 실험", "생명과학 실험"],
+            "예술/기타": ["포스트모던음악", "미술 전공 실기 응용", "소프트웨어와 생활", "베트남의 사회와 문화"]
+        }
+    },
+    "12": {
+        "1학기": {
+            "국영수 심화": ["21세기 문학탐구", "미디어와 창의적 표현", "고급 미적분", "수학과제 탐구", "기하", "인공지능 수학"],
+            "사과탐 심화": ["원리와 사상", "한국지리 탐구", "법과 사회", "사회문제 탐구", "역학과 에너지", "전자기와 양자"],
+            "예술/IT/기타": ["음악 연주와 창작", "미술 전공 실기 심화", "정보과학 과제연구", "비즈니스 엑셀"]
+        },
+        "2학기": {
+            "국영수 심화": ["문학과 여행", "프레젠테이션 화법", "글로벌 이슈 글쓰기", "고급 대수", "실용 통계", "수학 실험"],
+            "사과탐 심화": ["국제 관계의 이해", "인문학적 윤리", "여행지리", "역사로 탐구하는 현대 세계", "금융과 경제생활", "고급 물리", "고급 화학"],
+            "예술/IT/기타": ["음악 감상과 비평", "미술 감상과 비평", "베트남어 회화", "베트남 사회문화탐구"]
+        }
+    }
+}
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/select_subjects', methods=['POST'])
+def select_subjects():
+    grade = request.form.get('grade')
+    semester = request.form.get('semester')
+    student_id = request.form.get('student_id')
+    student_name = request.form.get('student_name')
+    subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
+    # 11학년 28학점(택7), 12학년 32학점(택8)
+    target_credit = 28 if grade == "11" else 32
+    return render_template('select.html', grade=grade, semester=semester, 
+                           student_id=student_id, student_name=student_name, 
+                           subjects=subjects, target_credit=target_credit)
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    student_id = request.form.get('student_id')
+    student_name = request.form.get('student_name')
+    grade = request.form.get('grade')
+    semester = request.form.get('semester')
+    selected_list = request.form.getlist('selected_subjects')
+    
+    student_submissions[student_id] = {
+        'name': student_name, 'grade': grade, 'semester': semester,
+        'subjects': selected_list, 'total_credits': len(selected_list) * 4
+    }
+    return redirect(url_for('result', student_id=student_id))
+
+@app.route('/result/<student_id>')
+def result(student_id):
+    data = student_submissions.get(student_id, {})
+    return render_template('result.html', data=data)
+
+# --- 선생님용 관리자 대시보드 ---
+@app.route('/admin')
+def admin():
+    # 과목별 인원 통계 계산
+    all_selected_subjects = []
+    for info in student_submissions.values():
+        all_selected_subjects.extend(info['subjects'])
+    subject_counts = Counter(all_selected_subjects)
+    
+    return render_template('admin.html', 
+                           all_submissions=student_submissions, 
+                           subject_counts=subject_counts)
+
+@app.route('/download_excel')
+def download_excel():
+    si = StringIO()
+    si.write('\ufeff')
+    cw = csv.writer(si)
+    cw.writerow(['학번', '이름', '학년', '학기', '신청과목', '총학점'])
+    for sid, info in student_submissions.items():
+        cw.writerow([sid, info['name'], info['grade'], info['semester'], ", ".join(info['subjects']), info['total_credits']])
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=kis_list.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+
+
+
+# ... (기존 상단 코드는 동일)
+
+# --- 반 편성 로직 (추가된 부분) ---
+@app.route('/assign_classes', methods=['POST'])
+def assign_classes():
+    # 과목별로 학생들을 그룹화 { 과목명: [학생이름, 학생이름...] }
+    class_assignments = {}
+    
+    for sid, info in student_submissions.items():
+        for subject in info['subjects']:
+            if subject not in class_assignments:
+                class_assignments[subject] = []
+            class_assignments[subject].append(f"{info['name']}({sid})")
+            
+    return render_template('admin.html', 
+                           all_submissions=student_submissions, 
+                           class_results=class_assignments)
+
+# --- 엑셀 다운로드 등 나머지 코드 유지 ---
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)

@@ -3,6 +3,7 @@ import csv
 from io import StringIO
 
 app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='static')
 
 # 데이터 저장소 (Vercel에서는 재배포/슬립 시 초기화됨)
 student_submissions = {}

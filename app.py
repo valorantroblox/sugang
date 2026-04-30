@@ -9,7 +9,7 @@ app.secret_key = "kis_secret_key"
 # --- 설정 데이터 ---
 GAS_URL = "https://script.google.com/macros/s/AKfybygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlVHiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
 
-# --- 과목 데이터 (11학년 & 12학년 사진 완벽 반영) ---
+# --- 과목 데이터 (11학년 & 12학년 사진 반영) ---
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -49,16 +49,9 @@ def select_subjects():
     student_name = request.form.get('student_name')
     grade = request.form.get('grade')
     semester = request.form.get('semester')
-    
-    # 학년/학기에 맞는 과목 가져오기
     subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    # 11학년은 28학점(7개), 12학년은 32학점(8개)
     target_credit = 28 if grade == "11" else 32
-    
-    return render_template('select.html', 
-                           student_id=student_id, student_name=student_name, 
-                           grade=grade, semester=semester, 
-                           subjects=subjects, target_credit=target_credit)
+    return render_template('select.html', student_id=student_id, student_name=student_name, grade=grade, semester=semester, subjects=subjects, target_credit=target_credit)
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -69,15 +62,11 @@ def submit():
         semester = request.form.get('semester')
         selected_list = request.form.getlist('selected_subjects')
         
-        if not student_id: return "학번 누락", 400
-
-        # 결과 저장
         student_submissions[student_id] = {
             'name': student_name, 'grade': grade, 'semester': semester,
             'subjects': selected_list, 'total_credits': len(selected_list) * 4
         }
         
-        # 구글 시트 전송 시도
         try:
             payload = {"student_id": student_id, "student_name": student_name, "grade": grade, "semester": semester, "subjects": ", ".join(selected_list)}
             requests.post(GAS_URL, data=json.dumps(payload), timeout=2)
@@ -85,12 +74,11 @@ def submit():
 
         return redirect(url_for('result', student_id=student_id))
     except Exception as e:
-        return f"서버 에러: {str(e)}", 500
+        return f"Error: {str(e)}", 500
 
 @app.route('/result/<student_id>')
 def result(student_id):
     info = student_submissions.get(student_id)
-    if not info: return "정보를 찾을 수 없습니다.", 404
     return render_template('result.html', info=info)
 
 if __name__ == '__main__':

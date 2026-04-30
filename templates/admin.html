@@ -58,7 +58,14 @@
                                     <td><strong>{{ subject }}</strong></td>
                                     <td>{{ class_stats[subject].count }}명</td>
                                     <td><span class="badge bg-{{ class_stats[subject].color }}">{{ class_stats[subject].status }}</span></td>
-                                    <td><small class="text-muted">{{ students | join(', ') }}</small></td>
+                                    <!-- admin.html 내 명단 출력 부분 -->
+                                    <td>
+                                        {% if class_results.get(subject) %}
+                                            {{ class_results[subject]|join(", ") }}
+                                        {% else %}
+                                            신청자 없음
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

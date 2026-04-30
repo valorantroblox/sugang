@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__)
 
 # 1. 구글 앱스 스크립트 배포 후 받은 URL을 여기에 꼭 넣어줘!
-GAS_URL = "https://script.google.com/macros/s/AKfycby_swDhlmt4b1cjGySfk3nYiy7gli2oVi6GaEB0YVwlQ0giAyImrWd3V2HKiVTnNSOZ/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbw89m2lPcn4V_5ux3pJpLrtdf7F8caKCux5DNvyBJow6ouqm2_FfnEMJhdpw2H5JAv0/exec"
 
 # 데이터 저장소 (관리자 페이지에서 실시간 확인용 임시 저장)
 student_submissions = {}

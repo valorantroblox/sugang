@@ -242,6 +242,11 @@ def result(student_id):
 
 @app.route('/admin')
 def admin():
+    # 1. 관리자 세션이 없으면 로그인 페이지로 강제 이동
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    # 2. 로그인된 경우에만 실행되는 기존 코드
     class_stats = {}
     if class_assignment_results:
         for subject, students in class_assignment_results.items():
@@ -256,6 +261,26 @@ def admin():
                            class_results=class_assignment_results,
                            class_stats=class_stats,
                            sheet_url=SHEET_URL)
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        pw = request.form.get('password')
+        if pw == '1234':  # 👈 여기에 너만 아는 비밀번호를 적어!
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin'))
+        else:
+            return "<script>alert('잘못된 비밀번호'); window.history.back();</script>"
+            
+    return '''
+        <div style="text-align:center; margin-top:100px;">
+            <h2>KIS 수강신청 관리자 로그인</h2>
+            <form method="post">
+                <input type="password" name="password" placeholder="비밀번호" style="padding:10px;">
+                <button type="submit" style="padding:10px;">접속</button>
+            </form>
+        </div>
+    '''
 
 @app.route('/assign_classes', methods=['POST'])
 def assign_classes():

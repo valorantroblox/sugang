@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <!-- admin.html 상단에 추가 -->
+<div class="filter-section mb-4">
+    <form action="/admin" method="get" class="row g-3 align-items-center">
+        <div class="col-auto">
+            <select name="grade" class="form-select">
+                <option value="11" {% if curr_grade == '11' %}selected{% endif %}>11학년</option>
+                <option value="12" {% if curr_grade == '12' %}selected{% endif %}>12학년</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="semester" class="form-select">
+                <option value="1학기" {% if curr_semester == '1학기' %}selected{% endif %}>1학기</option>
+                <option value="2학기" {% if curr_semester == '2학기' %}selected{% endif %}>2학기</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">조회하기</button>
+        </div>
+        <div class="col-auto">
+            <a href="{{ sheet_url }}" target="_blank" class="btn btn-success">구글 시트 열기</a>
+        </div>
+    </form>
+</div>
     <!-- 파비콘 설정 코드 --> 
     <link rel="icon" href="https://lh6.googleusercontent.com/proxy/1gPVltbenQ0_dtr_CzsDtUKKq0wl3dhvHlOCpaQCNMe4QZIjBFedPOJ7LvUsG28oGE1rUSPuiNBEG9uuEoZg" type="image/x-icon">
     <meta charset="UTF-8">

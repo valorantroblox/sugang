@@ -204,10 +204,16 @@ def admin():
 def assign_classes():
     global class_assignment_results
     temp_results = {}
+    
     for sid, info in student_submissions.items():
+        # 명단에 보일 형식을 '학번(이름)'으로 생성
+        student_display = f"{sid}({info['name']})"
+        
         for subject in info['subjects']:
-            if subject not in temp_results: temp_results[subject] = []
-            temp_results[subject].append(info['name'])
+            if subject not in temp_results:
+                temp_results[subject] = []
+            temp_results[subject].append(student_display) # 이름 대신 학번(이름) 저장
+            
     class_assignment_results = temp_results
     return redirect(url_for('admin'))
 

@@ -143,12 +143,11 @@ def select_subjects():
 def submit():
     student_id = request.form.get('student_id')
     student_name = request.form.get('student_name')
-    # 여기서 form에 숨겨진 grade와 semester를 읽어와야 해
     grade = request.form.get('grade')
     semester = request.form.get('semester')
     selected_list = request.form.getlist('selected_subjects')
     
-    # student_submissions에 잘 넣어주기
+    # 1. 서버 메모리에 저장 (admin 페이지용)
     student_submissions[student_id] = {
         'name': student_name, 
         'grade': grade, 
@@ -157,9 +156,28 @@ def submit():
         'total_credits': len(selected_list) * 4
     }
     
-    # (생략: 구글 시트 전송 로직...)
-    return redirect(url_for('result', student_id=student_id))
+    # 2. 구글 시트로 전송 (이 부분이 생략되어 있었어!)
+    try:
+        payload = {
+            "student_id": student_id, 
+            "student_name": student_name, 
+            "grade": grade, 
+            "semester": semester, 
+            "subjects": ", ".join(selected_list) # 리스트를 글자로 합쳐서 보냄
+        }
+        
+        # POST 방식으로 GAS_URL에 데이터 전송
+        response = requests.post(
+            GAS_URL, 
+            data=json.dumps(payload), 
+            headers={'Content-Type': 'application/json'},
+            timeout=5
+        )
+        print(f"구글 시트 전송 결과: {response.status_code}") # 터미널에서 성공 확인용
+    except Exception as e:
+        print(f"구글 시트 전송 에러: {e}")
 
+    return redirect(url_for('result', student_id=student_id))
 @app.route('/result/<student_id>')
 def result(student_id):
     info = student_submissions.get(student_id)

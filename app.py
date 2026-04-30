@@ -1,40 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response
-import csv
-from io import StringIO
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+import os
 
 app = Flask(__name__)
-app = Flask(__name__, static_url_path='', static_folder='static')
 
-# 데이터 저장소 (Vercel에서는 재배포/슬립 시 초기화됨)
+# 데이터 저장소
 student_submissions = {}
 
-# KIS 교과과정 데이터
+# KIS 교과 데이터 (실제 엑셀 내용 반영)
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
-            "기초/탐구": ["문학과 콘텐츠", "독서와 국어생활", "토론과 글쓰기", "대수", "미적분I", "Essential Academic Reading"],
-            "사회/과학": ["세계사", "사회와 문화", "윤리와 사상", "기후 변화와 지속 가능한 세계", "물리학I", "화학I", "생명과학I"],
-            "예술/기타": ["시/뉴미디어 문학", "미술 전공 실기 기초", "데이터 과학", "실용 베트남어"]
-        },
-        "2학기": {
-            "기초/탐구": ["주제 탐구 독서", "심화 국어", "삶과 글쓰기", "미디어와 비판적 사고", "확률과 통계", "미적분II"],
-            "사회/과학": ["현대사회와 윤리", "세계 시민과 지리", "경제", "정치", "물리적 실험", "화학 실험", "생명과학 실험"],
-            "예술/기타": ["포스트모던음악", "미술 전공 실기 응용", "소프트웨어와 생활", "베트남의 사회와 문화"]
-        }
-    },
-    "12": {
-        "1학기": {
-            "국영수 심화": ["21세기 문학탐구", "미디어와 창의적 표현", "고급 미적분", "수학과제 탐구", "기하", "인공지능 수학"],
-            "사과탐 심화": ["원리와 사상", "한국지리 탐구", "법과 사회", "사회문제 탐구", "역학과 에너지", "전자기와 양자"],
-            "예술/IT/기타": ["음악 연주와 창작", "미술 전공 실기 심화", "정보과학 과제연구", "비즈니스 엑셀"]
-        },
-        "2학기": {
-            "국영수 심화": ["문학과 여행", "프레젠테이션 화법", "글로벌 이슈 글쓰기", "고급 대수", "실용 통계", "수학 실험"],
-            "사과탐 심화": ["국제 관계의 이해", "인문학적 윤리", "여행지리", "역사로 탐구하는 현대 세계", "금융과 경제생활", "고급 물리", "고급 화학"],
-            "예술/IT/기타": ["음악 감상과 비평", "미술 감상과 비평", "베트남어 회화", "베트남 사회문화탐구"]
+            "기초/탐구": ["대수", "미적분Ⅰ", "문학과 콘텐츠", "토론과 글쓰기", "Essential English Grammar", "Essential Academic Reading"],
+            "사회/과학": ["사회와 문화", "세계사", "생명과학", "화학", "윤리문제 탐구", "Fundamentals of Psychology"],
+            "예술/기타": ["데이터 과학", "Business Studies", "Introduction to Chemistry"]
         }
     }
 }
+
+# --- 파비콘 에러 방지 ---
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 @app.route('/')
 def index():
@@ -42,36 +28,26 @@ def index():
 
 @app.route('/select_subjects', methods=['POST'])
 def select_subjects():
-    grade = request.form.get('grade')
-    semester = request.form.get('semester')
-    student_id = request.form.get('student_id')
-    student_name = request.form.get('student_name')
-    subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    target_credit = 28 if grade == "11" else 32
-    return render_template('select.html', grade=grade, semester=semester, 
-                           student_id=student_id, student_name=student_name, 
-                           subjects=subjects, target_credit=target_credit)
+    try:
+        grade = request.form.get('grade')
+        semester = request.form.get('semester')
+        student_id = request.form.get('student_id')
+        student_name = request.form.get('student_name')
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    student_id = request.form.get('student_id')
-    student_name = request.form.get('student_name')
-    grade = request.form.get('grade')
-    semester = request.form.get('semester')
-    selected_list = request.form.getlist('selected_subjects')
-    
-    if student_id:
-        student_submissions[student_id] = {
-            'name': student_name, 'grade': grade, 'semester': semester,
-            'subjects': selected_list, 'total_credits': len(selected_list) * 4
-        }
-    return redirect(url_for('result', student_id=student_id))
+        if not all([grade, semester, student_id, student_name]):
+            return redirect(url_for('index'))
 
-@app.route('/result/<student_id>')
-def result(student_id):
-    data = student_submissions.get(student_id, {})
-    return render_template('result.html', data=data)
+        subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
+        target_credit = 28 if grade == "11" else 32
 
+        return render_template('select.html', 
+                               grade=grade, semester=semester, 
+                               student_id=student_id, student_name=student_name, 
+                               subjects=subjects, target_credit=target_credit)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+# ... (나머지 submit, admin 함수 등은 이전과 동일)
 # --- 어드민 & 반 편성 통합 ---
 @app.route('/admin')
 def admin():

@@ -64,21 +64,27 @@ def submit():
     try:
         student_id = request.form.get('student_id')
         student_name = request.form.get('student_name')
+        grade = request.form.get('grade')  # 학년 추가
+        semester = request.form.get('semester')  # 학기 추가
         selected_list = request.form.getlist('selected_subjects')
         subjects_str = ", ".join(selected_list)
         
         if student_id:
-            # 1. 메모리에 임시 저장 (관리자용)
+            # 관리자 페이지 표시용 데이터에 학년/학기 추가
             student_submissions[student_id] = {
                 'name': student_name,
+                'grade': grade,        # 추가
+                'semester': semester,  # 추가
                 'subjects': selected_list,
                 'total_credits': len(selected_list) * 4
             }
             
-            # 2. 구글 시트로 데이터 전송 (POST 요청)
+            # 구글 시트로 보낼 때도 필요하다면 추가 (선택사항)
             payload = {
                 "student_id": student_id,
                 "student_name": student_name,
+                "grade": grade,
+                "semester": semester,
                 "subjects": subjects_str
             }
             requests.post(GAS_URL, data=json.dumps(payload), timeout=5)

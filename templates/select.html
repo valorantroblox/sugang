@@ -157,41 +157,50 @@
     </div>
 
 <script>
-    const targetCredit = {{ target_credit }}; // 파이썬에서 넘겨준 28 또는 32
-    const checkboxes = document.querySelectorAll('input[name="selected_subjects"]');
-    const creditDisplay = document.getElementById('total-credits'); // 학점 표시되는 곳 ID
+    // 페이지 로드 시 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        const targetCredit = parseInt("{{ target_credit }}"); 
+        const creditDisplay = document.getElementById('total-credits');
+        const checkboxes = document.querySelectorAll('input[name="selected_subjects"]');
+        const form = document.getElementById('selectionForm');
 
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            let currentTotal = 0;
-            const checkedBoxes = document.querySelectorAll('input[name="selected_subjects"]:checked');
+        function updateCredits() {
+            // 체크된 박스 개수 파악
+            const checkedCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length;
+            const currentTotal = checkedCount * 4;
             
-            // 체크된 과목당 4학점씩 계산
-            currentTotal = checkedBoxes.length * 4;
-            
-            // 화면에 현재 학점 표시 업데이트
-            if(creditDisplay) {
+            // 화면 숫자 업데이트
+            if (creditDisplay) {
                 creditDisplay.innerText = currentTotal;
             }
 
-            // 목표 학점 초과 시 경고
+            // 28학점(또는 32학점) 초과 체크
             if (currentTotal > targetCredit) {
-                alert(`⚠️ 경고: 최대 ${targetCredit}학점까지만 선택 가능합니다! (현재 ${currentTotal}학점)`);
-                checkbox.checked = false; // 방금 체크한 거 취소
-                
-                // 취소 후 다시 학점 계산해서 표시
-                const finalCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length * 4;
-                if(creditDisplay) creditDisplay.innerText = finalCount;
+                alert(`⚠️ 최대 ${targetCredit}학점까지만 선택할 수 있습니다!`);
+                return false;
             }
-        });
-    });
+            return true;
+        }
 
-    // 폼 제출 시 최종 확인
-    document.getElementById('selectionForm').addEventListener('submit', (e) => {
-        const finalTotal = document.querySelectorAll('input[name="selected_subjects"]:checked').length * 4;
-        if (finalTotal !== targetCredit) {
-            alert(`정확히 ${targetCredit}학점을 맞춰야 신청이 가능합니다!`);
-            e.preventDefault(); // 제출 중단
+        // 모든 체크박스에 이벤트 연결
+        checkboxes.forEach(box => {
+            box.addEventListener('change', function() {
+                if (!updateCredits()) {
+                    this.checked = false; // 초과하면 체크 해제
+                    updateCredits(); // 숫자 다시 계산
+                }
+            });
+        });
+
+        // 폼 제출 시 최종 확인
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const finalTotal = document.querySelectorAll('input[name="selected_subjects"]:checked').length * 4;
+                if (finalTotal !== targetCredit) {
+                    alert(`정확히 ${targetCredit}학점을 선택해야 신청이 가능합니다! (현재: ${finalTotal}학점)`);
+                    e.preventDefault(); // 제출 중단
+                }
+            });
         }
     });
 </script>

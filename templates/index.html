@@ -1,140 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- 파비콘 설정 코드 --> 
-    <link rel="icon" href="https://lh6.googleusercontent.com/proxy/1gPVltbenQ0_dtr_CzsDtUKKq0wl3dhvHlOCpaQCNMe4QZIjBFedPOJ7LvUsG28oGE1rUSPuiNBEG9uuEoZg" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIS 수강신청 시스템</title>
+    <title>KIS 수강신청</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root {
-            --kis-navy: #002d5d; /* 학교 로고의 남색 */
-            --kis-gold: #c5a059; /* 학교 로고의 금색 포인트 */
-            --kis-red: #d32f2f;  /* 로고 상단 레드 포인트 */
-        }
-
-        body {
-            background-color: #f4f6f9;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Pretendard', sans-serif;
-        }
-
-        .login-card {
-            background: white;
-            padding: 0;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 450px;
-            overflow: hidden;
-            border-top: 6px solid var(--kis-navy);
-        }
-
-        .card-header {
-            background: white;
-            padding: 30px 20px 10px 20px;
-            text-align: center;
-        }
-
-        .school-logo {
-            max-width: 280px; /* 로고 크기 조절 */
-            margin-bottom: 15px;
-        }
-
-        .card-body {
-            padding: 30px;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--kis-navy);
-        }
-
-        .form-control, .form-select {
-            border: 1.5px solid #dee2e6;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--kis-gold);
-            box-shadow: 0 0 0 0.25rem rgba(197, 160, 89, 0.25);
-        }
-
-        .btn-kis {
-            background-color: var(--kis-navy);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            transition: 0.3s;
-        }
-
-        .btn-kis:hover {
-            background-color: #001d3d;
-            color: var(--kis-gold);
-            transform: translateY(-2px);
-        }
-
-        .footer-text {
-            font-size: 0.85rem;
-            color: #888;
-            text-align: center;
-            margin-top: 20px;
-        }
+        body { background: #f8f9fa; display: flex; align-items: center; min-height: 100vh; }
+        .login-card { max-width: 400px; width: 100%; margin: auto; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
     </style>
 </head>
 <body>
-
-    <div class="login-card">
-        <div class="card-header">
-            <img src="https://lh6.googleusercontent.com/proxy/jJIIEXohn2xFoj2rJ7DV5jnkNvSjkFiC9h935hqCYxekgLtKgp8pe9oEZ8vhb7oElBFQNggIAwQYXRemyLQYUQagLgxRSZw" alt="KIS Logo" class="school-logo">
-            <h4 class="fw-bold mt-2" style="color: var(--kis-navy);">수강신청 시스템</h4>
-        </div>
-
-        <div class="card-body">
+    <div class="container px-4">
+        <div class="card login-card p-4">
+            <h3 class="text-center fw-bold mb-4" style="color: #002d5d;">KIS 수강신청</h3>
             <form action="/select_subjects" method="post">
-                <div class="row">
-                    <div class="col-6 mb-3">
-                        <label class="form-label">학년</label>
-                        <select name="grade" class="form-select" required>
-                            <option value="11">11학년</option>
-                            <option value="12">12학년</option>
-                        </select>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <label class="form-label">학기</label>
-                        <select name="semester" class="form-select" required>
-                            <option value="1학기">1학기</option>
-                            <option value="2학기">2학기</option>
-                        </select>
-                    </div>
+                <div class="mb-3"><label class="form-label small fw-bold">학번</label><input type="text" name="student_id" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label small fw-bold">이름</label><input type="text" name="student_name" class="form-control" required></div>
+                <div class="row g-2 mb-4">
+                    <div class="col-6"><label class="form-label small fw-bold">학년</label><select name="grade" class="form-select"><option value="11">11학년</option><option value="12">12학년</option></select></div>
+                    <div class="col-6"><label class="form-label small fw-bold">학기</label><select name="semester" class="form-select"><option value="1학기">1학기</option><option value="2학기">2학기</option></select></div>
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label">학번</label>
-                    <input type="text" name="student_id" class="form-control" placeholder="5자리 학번 입력(예:11301)" required>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">이름</label>
-                    <input type="text" name="student_name" class="form-control" placeholder="이름 입력(예:홍길동)" required>
-                </div>
-
-                <button type="submit" class="btn btn-kis w-100">과목 확인하기</button>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">과목 선택 시작</button>
             </form>
-            
-            <div class="footer-text">
-                KOREAN INTERNATIONAL SCHOOL HCMC
-            </div>
         </div>
     </div>
-
 </body>
 </html>

@@ -1,9 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for
+import requests
+import json
 import traceback
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# 데이터 저장소 (학생들이 신청한 정보가 여기 담겨)
+# 1. 구글 앱스 스크립트 배포 후 받은 URL을 여기에 꼭 넣어줘!
+GAS_URL = "https://script.google.com/macros/s/AKfycby_swDhlmt4b1cjGySfk3nYiy7gli2oVi6GaEB0YVwlQ0giAyImrWd3V2HKiVTnNSOZ/exec"
+
+# 데이터 저장소 (관리자 페이지에서 실시간 확인용 임시 저장)
 student_submissions = {}
 
 # 11학년 1학기 실제 과목 데이터
@@ -51,14 +56,24 @@ def submit():
         student_id = request.form.get('student_id')
         student_name = request.form.get('student_name')
         selected_list = request.form.getlist('selected_subjects')
+        subjects_str = ", ".join(selected_list)
         
         if student_id:
-            # 신청한 데이터를 메모리에 저장
+            # 1. 로컬 메모리에 저장 (관리자용)
             student_submissions[student_id] = {
                 'name': student_name,
                 'subjects': selected_list,
                 'total_credits': len(selected_list) * 4
             }
+            
+            # 2. 구글 시트(Apps Script)로 데이터 전송
+            payload = {
+                "student_id": student_id,
+                "student_name": student_name,
+                "subjects": subjects_str
+            }
+            requests.post(GAS_URL, data=json.dumps(payload))
+            
         return redirect(url_for('result', student_id=student_id))
     except Exception:
         return f"<pre>{traceback.format_exc()}</pre>", 500
@@ -68,16 +83,12 @@ def result(student_id):
     data = student_submissions.get(student_id, {})
     return render_template('result.html', data=data)
 
-# --- 여기서부터 어드민 관련 코드 (중요!) ---
-
 @app.route('/admin')
 def admin():
-    # 모든 신청 현황을 관리자 페이지로 보냄
     return render_template('admin.html', all_submissions=student_submissions, class_results=None)
 
 @app.route('/assign_classes', methods=['POST'])
 def assign_classes():
-    # 과목별로 학생들을 모아서 반을 편성함
     class_assignments = {}
     for sid, info in student_submissions.items():
         for subject in info.get('subjects', []):

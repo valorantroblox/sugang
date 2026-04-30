@@ -114,7 +114,8 @@
         <form action="/submit" method="post" id="selectionForm">
             <input type="hidden" name="student_id" value="{{ student_id }}">
             <input type="hidden" name="student_name" value="{{ student_name }}">
-
+            <input type="hidden" name="grade" value="{{ grade }}">
+            <input type="hidden" name="semester" value="{{ semester }}">
             {% for category, list in subjects.items() %}
             <h5 class="category-title">{{ category }}</h5>
             <div class="row g-3">

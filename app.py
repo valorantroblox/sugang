@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
-import csv
-from io import StringIO
+import traceback # 에러 원인을 찾기 위해 추가
 
 app = Flask(__name__)
 
-# 데이터 저장소 (Vercel 세션 초기화 주의)
+# 데이터 저장소
 student_submissions = {}
 
-# 11학년 1학기 실제 데이터 반영.xlsx]
+# 11학년 1학기 실제 데이터 기반 과목 리스트.xlsx]
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -28,34 +27,40 @@ def index():
 
 @app.route('/select_subjects', methods=['POST'])
 def select_subjects():
-    grade = request.form.get('grade')
-    semester = request.form.get('semester')
-    student_id = request.form.get('student_id')
-    student_name = request.form.get('student_name')
-    
-    if not all([grade, semester, student_id, student_name]):
-        return redirect(url_for('index'))
+    try:
+        grade = request.form.get('grade')
+        semester = request.form.get('semester')
+        student_id = request.form.get('student_id')
+        student_name = request.form.get('student_name')
         
-    subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    target_credit = 28 if grade == "11" else 32
-    
-    return render_template('select.html', grade=grade, semester=semester, 
-                           student_id=student_id, student_name=student_name, 
-                           subjects=subjects, target_credit=target_credit)
+        if not all([grade, semester, student_id, student_name]):
+            return redirect(url_for('index'))
+            
+        subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
+        target_credit = 28 if grade == "11" else 32
+        
+        return render_template('select.html', grade=grade, semester=semester, 
+                               student_id=student_id, student_name=student_name, 
+                               subjects=subjects, target_credit=target_credit)
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500 # 에러 발생 시 상세 정보 출력
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    student_id = request.form.get('student_id')
-    student_name = request.form.get('student_name')
-    selected_list = request.form.getlist('selected_subjects')
-    
-    if student_id:
-        student_submissions[student_id] = {
-            'name': student_name,
-            'subjects': selected_list,
-            'total_credits': len(selected_list) * 4
-        }
-    return redirect(url_for('result', student_id=student_id))
+    try:
+        student_id = request.form.get('student_id')
+        student_name = request.form.get('student_name')
+        selected_list = request.form.getlist('selected_subjects')
+        
+        if student_id:
+            student_submissions[student_id] = {
+                'name': student_name,
+                'subjects': selected_list,
+                'total_credits': len(selected_list) * 4
+            }
+        return redirect(url_for('result', student_id=student_id))
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500
 
 @app.route('/result/<student_id>')
 def result(student_id):
@@ -70,7 +75,7 @@ def admin():
 def assign_classes():
     class_assignments = {}
     for sid, info in student_submissions.items():
-        for subject in info['subjects']:
+        for subject in info.get('subjects', []):
             if subject not in class_assignments:
                 class_assignments[subject] = []
             class_assignments[subject].append(f"{info['name']}({sid})")

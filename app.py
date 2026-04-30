@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# 사진 데이터를 기반으로 한 전체 과목 리스트
+# 과목 데이터 (생략 없이 그대로 유지)
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -65,6 +65,12 @@ SUBJECTS_DATA = {
     }
 }
 
+# 1. 메인 로그인 페이지 (index.html)
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# 2. 과목 선택 페이지 (select.html)
 @app.route('/select_subjects', methods=['POST'])
 def select_subjects():
     student_id = request.form.get('student_id')
@@ -73,8 +79,6 @@ def select_subjects():
     semester = request.form.get('semester')
     
     subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    
-    # 사진 하단 기준 11학년은 28학점 목표
     target_credit = 28 if grade == "11" else 32 
     
     return render_template('select.html', 
@@ -84,6 +88,16 @@ def select_subjects():
                            semester=semester, 
                            subjects=subjects,
                            target_credit=target_credit)
+
+# 3. 신청 완료 처리 페이지
+@app.route('/submit', methods=['POST'])
+def submit():
+    student_id = request.form.get('student_id')
+    student_name = request.form.get('student_name')
+    selected_subjects = request.form.getlist('selected_subjects')
+    
+    # 여기서 실제로 DB에 저장하거나 출력함
+    return f"<h3>{student_name}({student_id})님의 신청이 완료되었습니다!</h3><p>선택 과목: {', '.join(selected_subjects)}</p>"
 
 if __name__ == '__main__':
     app.run(debug=True)

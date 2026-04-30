@@ -132,7 +132,17 @@
                     <label class="subject-card d-block" for="sub-{{ safe_id }}">
                         <div class="subject-info">
                             <div>
-                                <div class="fw-bold mb-1">{{ subject.name }}</div>
+                                <div class="fw-bold mb-1">
+                                    {{ subject.name }}
+                                    {% if subject.category == '융합' %}
+                                        <span class="badge bg-info text-dark" style="font-size: 0.65rem;">융합</span>
+                                    {% elif subject.category == '진로' %}
+                                        <span class="badge bg-success" style="font-size: 0.65rem;">진로</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">일반</span>
+                                    {% endif %}
+                                    
+                                </div>
                                 <span class="badge-type">{{ subject.type }}</span>
                             </div>
                             <div class="text-muted small">4학점</div>

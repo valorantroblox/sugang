@@ -6,14 +6,13 @@ app = Flask(__name__)
 # 데이터 저장소
 student_submissions = {}
 
-# 11학년 1학기 실제 데이터 기반 과목 리스트
-# 엑셀에 있는 이름과 100% 똑같이 맞췄어.
+# [Raw].xlsx 파일의 실제 과목명을 100% 반영한 데이터
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
             "기초/탐구": ["대수", "미적분Ⅰ", "문학과 콘텐츠", "토론과 글쓰기", "Essential English Grammar", "Essential Academic Reading", "미디어와 국어생활"],
             "사회/과학": ["사회와 문화", "세계사", "생명과학", "화학", "윤리문제 탐구", "Fundamentals of Psychology", "Introduction to Chemistry"],
-            "예술/기타": ["데이터 과학", "Business Studies"]
+            "예술/기타": ["데이터 과학", "Business Studies", "윤리문제 탐구"]
         }
     }
 }
@@ -27,7 +26,7 @@ def index():
     try:
         return render_template('index.html')
     except Exception as e:
-        return f"메인 화면을 찾을 수 없습니다: {str(e)}", 500
+        return f"메인 화면(index.html)을 찾을 수 없습니다. templates 폴더를 확인하세요: {str(e)}", 500
 
 @app.route('/select_subjects', methods=['POST'])
 def select_subjects():
@@ -37,23 +36,25 @@ def select_subjects():
         student_id = request.form.get('student_id')
         student_name = request.form.get('student_name')
         
+        # 데이터가 잘 넘어왔는지 검사
         if not all([grade, semester, student_id, student_name]):
-            return "모든 정보를 입력해주세요.", 400
+            return "입력 정보가 부족합니다. 학번과 이름을 모두 입력했는지 확인하세요.", 400
             
         grade_data = SUBJECTS_DATA.get(grade, {})
         subjects = grade_data.get(semester, {})
         
         if not subjects:
-            return f"{grade}학년 {semester} 데이터가 없습니다. SUBJECTS_DATA를 확인하세요.", 404
+            return f"{grade}학년 {semester}에 대한 과목 데이터가 코드에 없습니다.", 404
             
+        # KIS 11학년 기준 학점
         target_credit = 28 if grade == "11" else 32
         
         return render_template('select.html', grade=grade, semester=semester, 
                                student_id=student_id, student_name=student_name, 
                                subjects=subjects, target_credit=target_credit)
     except Exception:
-        # 에러가 나면 화면에 아주 자세하게 이유를 보여줘 (추적용)
-        return f"<pre>{traceback.format_exc()}</pre>", 500
+        # 에러 발생 시 상세한 파이썬 에러 로그를 화면에 출력
+        return f"<h3>서버 내부 에러 발생</h3><pre>{traceback.format_exc()}</pre>", 500
 
 @app.route('/submit', methods=['POST'])
 def submit():

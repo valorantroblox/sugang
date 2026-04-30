@@ -71,6 +71,8 @@
                         <td><small>{{ info.subjects | join(', ') }}</small></td>
                     </tr>
                     {% endfor %}
+                    <!-- 테이블 내용(tbody) 부분 찾아서 수정 -->
+                    <td>{{ info.grade }} / {{ info.semester }}</td>
                 </tbody>
             </table>
         </div>

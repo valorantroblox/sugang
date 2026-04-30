@@ -110,14 +110,22 @@ def result(student_id):
 
 @app.route('/admin')
 def admin():
-    # 1. 세션 체크 (가장 먼저!)
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
-    
+
+    # 1. 학년/학기 필터 파라미터 가져오기 (기본값은 11학년 1학기)
+    selected_grade = request.args.get('grade', '11')
+    selected_semester = request.args.get('semester', '1학기')
+
+    # 2. 필터링된 명단 생성
+    filtered_submissions = {
+        sid: info for sid, info in student_submissions.items()
+        if info['grade'] == selected_grade and info['semester'] == selected_semester
+    }
+
+    # 3. 과목별 통계 계산 (필터링된 데이터 기준)
     class_stats = {}
-    # 2. 글로벌 변수들을 안전하게 가져오기 위해 global 선언 (필요시)
-    global class_assignment_results
-    
+    # 전체 선택 결과(class_assignment_results)를 바탕으로 통계 산출
     if class_assignment_results:
         for subject, students in class_assignment_results.items():
             count = len(students)
@@ -127,10 +135,12 @@ def admin():
             class_stats[subject] = {"count": count, "status": status, "color": color}
 
     return render_template('admin.html', 
-                           all_submissions=student_submissions, 
+                           all_submissions=filtered_submissions, # 필터링된 명단만 전달
                            class_results=class_assignment_results,
                            class_stats=class_stats,
-                           sheet_url=SHEET_URL)
+                           sheet_url=SHEET_URL,
+                           curr_grade=selected_grade,
+                           curr_semester=selected_semester)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():

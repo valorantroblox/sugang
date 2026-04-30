@@ -64,15 +64,16 @@
                     <tr><th>학번</th><th>이름</th><th>학년/학기</th><th>신청 과목</th></tr>
                 </thead>
                 <tbody>
-                    {% for id, info in all_submissions.items() %}
+                    {% for sid, info in all_submissions.items() %}
                     <tr>
-                        <td>{{ id }}</td><td>{{ info.name }}</td>
+                        <td>{{ sid }}</td>
+                        <td>{{ info.name }}</td>
+                        <!-- info가 정의된 이 루프 안에서 사용해야 해 -->
                         <td>{{ info.grade }} / {{ info.semester }}</td>
-                        <td><small>{{ info.subjects | join(', ') }}</small></td>
+                        <td>{{ info.subjects | join(', ') }}</td>
+                        <td>{{ info.total_credits }}</td>
                     </tr>
                     {% endfor %}
-                    <!-- 테이블 내용(tbody) 부분 찾아서 수정 -->
-                    <td>{{ info.grade }} / {{ info.semester }}</td>
                 </tbody>
             </table>
         </div>

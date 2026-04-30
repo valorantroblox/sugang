@@ -1,14 +1,13 @@
 import requests
 import json
 import traceback
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 app.secret_key = "kis_secret_key"
 
 # --- 설정 데이터 ---
 GAS_URL = "https://script.google.com/macros/s/AKfybygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlVHiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ElwfhhW45zLqXZIwjQ_Fd2FDswwcUXOeWxICoM/edit?hl=ko&gid=0#gid=0"
 
 # --- 과목 데이터 (11학년 & 12학년 사진 완벽 반영) ---
 SUBJECTS_DATA = {
@@ -38,7 +37,6 @@ SUBJECTS_DATA = {
     }
 }
 
-# 메모리 저장소 (서버 재시작 시 초기화됨)
 student_submissions = {}
 
 @app.route('/')
@@ -49,20 +47,18 @@ def index():
 def select_subjects():
     student_id = request.form.get('student_id')
     student_name = request.form.get('student_name')
-    grade = request.form.get('grade', '11')
-    semester = request.form.get('semester', '1학기')
+    grade = request.form.get('grade')
+    semester = request.form.get('semester')
     
+    # 학년/학기에 맞는 과목 가져오기
     subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    # 사진 기준 11학년은 28학점(택7), 12학년은 32학점(택8) 설정
+    # 11학년은 28학점(7개), 12학년은 32학점(8개)
     target_credit = 28 if grade == "11" else 32
     
     return render_template('select.html', 
-                           student_id=student_id, 
-                           student_name=student_name, 
-                           grade=grade, 
-                           semester=semester, 
-                           subjects=subjects,
-                           target_credit=target_credit)
+                           student_id=student_id, student_name=student_name, 
+                           grade=grade, semester=semester, 
+                           subjects=subjects, target_credit=target_credit)
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -73,66 +69,29 @@ def submit():
         semester = request.form.get('semester')
         selected_list = request.form.getlist('selected_subjects')
         
-        if student_id:
-            student_submissions[student_id] = {
-                'name': student_name,
-                'grade': grade,
-                'semester': semester,
-                'subjects': selected_list,
-                'total_credits': len(selected_list) * 4
-            }
-            
-            # 구글 시트로 데이터 전송
-            payload = {
-                "student_id": student_id,
-                "student_name": student_name,
-                "grade": grade,
-                "semester": semester,
-                "subjects": ", ".join(selected_list)
-            }
-            requests.post(GAS_URL, data=json.dumps(payload), timeout=5)
-            
+        if not student_id: return "학번 누락", 400
+
+        # 결과 저장
+        student_submissions[student_id] = {
+            'name': student_name, 'grade': grade, 'semester': semester,
+            'subjects': selected_list, 'total_credits': len(selected_list) * 4
+        }
+        
+        # 구글 시트 전송 시도
+        try:
+            payload = {"student_id": student_id, "student_name": student_name, "grade": grade, "semester": semester, "subjects": ", ".join(selected_list)}
+            requests.post(GAS_URL, data=json.dumps(payload), timeout=2)
+        except: pass
+
         return redirect(url_for('result', student_id=student_id))
-    except Exception:
-        return f"<pre>{traceback.format_exc()}</pre>", 500
+    except Exception as e:
+        return f"서버 에러: {str(e)}", 500
 
 @app.route('/result/<student_id>')
 def result(student_id):
     info = student_submissions.get(student_id)
+    if not info: return "정보를 찾을 수 없습니다.", 404
     return render_template('result.html', info=info)
-
-@app.route('/admin')
-def admin():
-    return render_template('admin.html', 
-                           all_submissions=student_submissions, 
-                           class_results=None, 
-                           sheet_url=SHEET_URL)
-
-@app.route('/assign_classes', methods=['POST'])
-def assign_classes():
-    class_assignments = {}
-    class_stats = {}
-    
-    # 과목별 인원 분류
-    for sid, info in student_submissions.items():
-        for subject in info.get('subjects', []):
-            if subject not in class_assignments:
-                class_assignments[subject] = []
-            class_assignments[subject].append(f"{info['name']}({sid})")
-    
-    # 분반 상태 진단 (1번 아이디어: 분반 제안)
-    for subject, students in class_assignments.items():
-        count = len(students)
-        if count >= 20: status, color = "분반 권장", "danger"
-        elif count <= 5: status, color = "폐강 위기", "warning"
-        else: status, color = "정상", "success"
-        class_stats[subject] = {"count": count, "status": status, "color": color}
-        
-    return render_template('admin.html', 
-                           all_submissions=student_submissions, 
-                           class_results=class_assignments,
-                           class_stats=class_stats,
-                           sheet_url=SHEET_URL)
 
 if __name__ == '__main__':
     app.run(debug=True)

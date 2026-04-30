@@ -6,61 +6,56 @@
     <title>과목 선택</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --kis-navy: #002d5d; }
-        body { background: #f4f6f9; padding-bottom: 120px; font-size: 14px; }
-        .subject-btn { display: block; padding: 15px; text-align: left; border-radius: 10px; margin-bottom: 5px; transition: 0.2s; border: 2px solid #eee; background: white; }
-        .btn-check:checked + .subject-btn { border-color: var(--kis-navy); background-color: #e7f1ff; }
-        .sticky-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 1000; }
-        @media (min-width: 768px) { body { font-size: 16px; } }
+        body { padding-bottom: 100px; background-color: #f8f9fa; }
+        .subject-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .sticky-bottom { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 1000; }
+        /* 예전 버튼 스타일 */
+        .subject-btn { margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <div class="container py-4 px-3">
+    <div class="container py-4">
         <div class="mb-4">
-            <h4 class="fw-bold" style="color: var(--kis-navy);">{{ student_name }}님 <small class="text-muted">({{ student_id }})</small></h4>
-            <p class="text-muted">{{ grade }}학년 {{ semester }} 수강신청</p>
+            <h4><b>{{ student_name }}</b>님 ({{ student_id }})</h4>
+            <p class="text-muted">{{ grade }}학년 {{ semester }} 과목 선택</p>
         </div>
 
-        <form action="/submit" method="post" id="subjectForm">
+        <form action="/submit" method="post">
             <input type="hidden" name="student_id" value="{{ student_id }}">
             <input type="hidden" name="student_name" value="{{ student_name }}">
 
-            {% for category, list in subjects.items() %}
-            <div class="mb-4">
-                <h6 class="fw-bold border-start border-4 border-primary ps-2 mb-3">{{ category }}</h6>
-                <div class="row g-2">
-                    {% for subject in list %}
-                    <div class="col-12 col-md-6">
-                        <!-- ID에 카테고리를 포함하여 중복 방지 (공백 및 슬래시 제거) -->
-                        {% set safe_cat = category.replace('/', '').replace(' ', '') %}
-                        <input type="checkbox" class="btn-check" 
-                               id="sub-{{ safe_cat }}-{{ loop.index0 }}" 
-                               name="selected_subjects" 
-                               value="{{ subject.name }}" 
-                               onchange="updateCredits()">
-                        
-                        <label class="subject-btn w-100" for="sub-{{ safe_cat }}-{{ loop.index0 }}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <strong style="color: var(--kis-navy);">{{ subject.name }}</strong>
-                                    <span class="badge rounded-pill bg-secondary ms-1" style="font-size: 0.75em;">{{ subject.type }}</span>
-                                </span>
-                                <span class="text-muted small">4학점</span>
-                            </div>
-                        </label>
+            <div class="subject-container">
+                {% for category, list in subjects.items() %}
+                <div class="mb-4">
+                    <h5 class="fw-bold mb-3">{{ category }}</h5>
+                    <div class="row">
+                        {% for subject in list %}
+                        <div class="col-12 col-md-6 subject-btn">
+                            <!-- 버그 수정을 위해 id에 카테고리 추가 -->
+                            {% set safe_id = category.replace('/', '').replace(' ', '') ~ loop.index0 %}
+                            <input type="checkbox" class="btn-check" 
+                                   id="sub-{{ safe_id }}" 
+                                   name="selected_subjects" 
+                                   value="{{ subject.name }}" 
+                                   onchange="updateCredits()">
+                            <label class="btn btn-outline-primary w-100 text-start d-flex justify-content-between" for="sub-{{ safe_id }}">
+                                <span>{{ subject.name }} <small class="text-secondary">({{ subject.type }})</small></span>
+                                <span>4학점</span>
+                            </label>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    <hr>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
 
-            <div class="sticky-bottom-bar">
+            <div class="sticky-bottom">
                 <div class="container d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="small text-muted">선택한 학점</span>
-                        <h4 class="fw-bold mb-0 text-primary"><span id="currentCredits">0</span> / {{ target_credit }}</h4>
+                        <strong>현재 선택 학점: <span id="currentCredits" class="text-primary">0</span> / {{ target_credit }}</strong>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg px-4 shadow fw-bold">신청 완료</button>
+                    <button type="submit" class="btn btn-success px-4">신청하기</button>
                 </div>
             </div>
         </form>
@@ -69,7 +64,6 @@
     <script>
         function updateCredits() {
             const checkedCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length;
-            // 한 과목당 4학점씩 계산
             document.getElementById('currentCredits').innerText = checkedCount * 4;
         }
     </script>

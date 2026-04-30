@@ -7,7 +7,7 @@ app.secret_key = "kis_secret_key" # 세션을 위한 비밀키
 
 # --- 설정 데이터 ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?gid=0#gid=0"
-GAS_URL = "https://script.google.com/macros/s/AKfycbwk7XcnZEU8p7bU2Q1Staw-dXhijMFKijQJ_HuiUgF7yN2kGo--LM5FOtoR8H-kHfFg/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbx6HMK1RUpetgzhoma4Rlb_RQrsc-0QUEzqFpuAfaA-P5kZmIBTVt2YOi9W8RxGtX3F/exec"
 
 def make_obj(name, sub_type, category="일반"):
     return {"name": name, "type": sub_type, "category": category}

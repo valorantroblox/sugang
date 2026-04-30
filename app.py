@@ -146,5 +146,11 @@ def result(student_id):
     # result.html의 {{ data }} 변수명에 맞춤
     return render_template('result.html', data=info)
 
+@app.route('/admin')
+def admin():
+    # 현재까지 저장된 모든 신청 데이터를 리스트로 변환해서 admin.html에 전달
+    all_submissions = list(student_submissions.values())
+    return render_template('admin.html', submissions=all_submissions)
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -156,13 +156,45 @@
         </form>
     </div>
 
-    <script>
-        function updateCredits() {
-            const checkedCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length;
-            // 과목당 4학점 계산
-            document.getElementById('currentCredits').innerText = checkedCount * 4;
+<script>
+    const targetCredit = {{ target_credit }}; // 파이썬에서 넘겨준 28 또는 32
+    const checkboxes = document.querySelectorAll('input[name="selected_subjects"]');
+    const creditDisplay = document.getElementById('total-credits'); // 학점 표시되는 곳 ID
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            let currentTotal = 0;
+            const checkedBoxes = document.querySelectorAll('input[name="selected_subjects"]:checked');
+            
+            // 체크된 과목당 4학점씩 계산
+            currentTotal = checkedBoxes.length * 4;
+            
+            // 화면에 현재 학점 표시 업데이트
+            if(creditDisplay) {
+                creditDisplay.innerText = currentTotal;
+            }
+
+            // 목표 학점 초과 시 경고
+            if (currentTotal > targetCredit) {
+                alert(`⚠️ 경고: 최대 ${targetCredit}학점까지만 선택 가능합니다! (현재 ${currentTotal}학점)`);
+                checkbox.checked = false; // 방금 체크한 거 취소
+                
+                // 취소 후 다시 학점 계산해서 표시
+                const finalCount = document.querySelectorAll('input[name="selected_subjects"]:checked').length * 4;
+                if(creditDisplay) creditDisplay.innerText = finalCount;
+            }
+        });
+    });
+
+    // 폼 제출 시 최종 확인
+    document.getElementById('selectionForm').addEventListener('submit', (e) => {
+        const finalTotal = document.querySelectorAll('input[name="selected_subjects"]:checked').length * 4;
+        if (finalTotal !== targetCredit) {
+            alert(`정확히 ${targetCredit}학점을 맞춰야 신청이 가능합니다!`);
+            e.preventDefault(); // 제출 중단
         }
-    </script>
+    });
+</script>
 
 </body>
 </html>

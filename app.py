@@ -108,34 +108,69 @@ def result(student_id):
 
 # --- 관리자 기능 구역 ---
 
+def sync_from_sheet():
+    """구글 시트에서 데이터를 가져와 서버 메모리(student_submissions)를 업데이트함"""
+    global student_submissions
+    try:
+        # GAS_URL로 GET 요청을 보냄
+        response = requests.get(GAS_URL, timeout=10)
+        if response.status_code == 200:
+            sheet_data = response.json()
+            # 서버 메모리 초기화 후 시트 데이터로 채우기
+            new_submissions = {}
+            for item in sheet_data:
+                sid = str(item['student_id'])
+                new_submissions[sid] = {
+                    'name': item['student_name'],
+                    'grade': item['grade'],
+                    'semester': item['semester'],
+                    'subjects': item['subjects'],
+                    'total_credits': len(item['subjects']) * 4
+                }
+            student_submissions = new_submissions
+            print(f"성공: {len(student_submissions)}명의 데이터를 시트에서 가져왔어.")
+        else:
+            print("에러: 구글 시트 응답이 좋지 않아.")
+    except Exception as e:
+        print(f"동기화 중 오류 발생: {e}")
+
 @app.route('/admin')
 def admin():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    # 1. 학년/학기 필터 파라미터 가져오기 (기본값은 11학년 1학기)
+    # 1. 관리자 페이지 들어올 때마다 시트와 동기화 (최신 명단 유지)
+    sync_from_sheet()
+
     selected_grade = request.args.get('grade', '11')
     selected_semester = request.args.get('semester', '1학기')
 
-    # 2. 필터링된 명단 생성
+    # 2. 필터링 로직 (학년/학기별)
     filtered_submissions = {
         sid: info for sid, info in student_submissions.items()
         if info['grade'] == selected_grade and info['semester'] == selected_semester
     }
 
-    # 3. 과목별 통계 계산 (필터링된 데이터 기준)
+    # 3. 과목별 인원 재계산 (동기화된 전체 데이터 기준)
+    global class_assignment_results
+    temp_assign = {}
+    for sid, info in student_submissions.items():
+        for sub in info['subjects']:
+            if sub not in temp_assign: temp_assign[sub] = []
+            temp_assign[sub].append(f"{sid}({info['name']})")
+    class_assignment_results = temp_assign
+
+    # ... 이하 기존 admin.html 렌더링 코드와 동일 ...
     class_stats = {}
-    # 전체 선택 결과(class_assignment_results)를 바탕으로 통계 산출
-    if class_assignment_results:
-        for subject, students in class_assignment_results.items():
-            count = len(students)
-            if count >= 15: status, color = "정상 개설", "success"
-            elif count >= 5: status, color = "인원 부족 주의", "warning"
-            else: status, color = "폐강 위기", "danger"
-            class_stats[subject] = {"count": count, "status": status, "color": color}
+    for subject, students in class_assignment_results.items():
+        count = len(students)
+        if count >= 15: status, color = "정상 개설", "success"
+        elif count >= 5: status, color = "인원 부족 주의", "warning"
+        else: status, color = "폐강 위기", "danger"
+        class_stats[subject] = {"count": count, "status": status, "color": color}
 
     return render_template('admin.html', 
-                           all_submissions=filtered_submissions, # 필터링된 명단만 전달
+                           all_submissions=filtered_submissions,
                            class_results=class_assignment_results,
                            class_stats=class_stats,
                            sheet_url=SHEET_URL,

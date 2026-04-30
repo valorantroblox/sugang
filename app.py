@@ -5,19 +5,67 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__)
 app.secret_key = "kis_secret_key"
 
-# --- 설정 데이터 ---
-# 구글 시트 주소 (정민이 시트 주소로 바꿔줘)
-SHEET_URL = "https://docs.google.com/spreadsheets/d/your_sheet_id_here"
-GAS_URL = "https://script.google.com/macros/s/AKfybygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlVHiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
+# 과목 객체를 만드는 함수 (네 HTML의 subject.name, subject.type 대응용)
+def make_obj(name, sub_type="전공선택"):
+    return {"name": name, "type": sub_type}
 
-# 과목 데이터 (생략 - 기존 11, 12학년 데이터 그대로 유지해줘)
-SUBJECTS_DATA = { 
-    # ... (기존에 꽉 채워준 SUBJECTS_DATA를 여기에 넣어줘) ...
+SUBJECTS_DATA = {
+    "11": {
+        "1학기": {
+            "국어/수학/영어": [
+                make_obj("문학과 콘텐츠", "국어"), make_obj("미디어와 국어생활", "국어"), 
+                make_obj("대수", "수학"), make_obj("미적분Ⅰ", "수학"), 
+                make_obj("Essential Academic Reading", "영어")
+            ],
+            "사회/과학": [
+                make_obj("세계사", "사회"), make_obj("물리학", "과학"), make_obj("화학", "과학")
+            ],
+            "정보/예술/기타": [
+                make_obj("데이터 과학", "정보"), make_obj("실용 베트남어", "외국어")
+            ]
+        },
+        "2학기": {
+            "국어/수학/영어": [
+                make_obj("주제 탐구 독서", "국어"), make_obj("확률과 통계", "수학"), 
+                make_obj("Practical Academic Reading", "영어")
+            ],
+            "사회/과학": [
+                make_obj("경제", "사회"), make_obj("물질과 에너지", "과학")
+            ],
+            "정보/예술/기타": [
+                make_obj("소프트웨어와 생활", "정보"), make_obj("실용 베트남어", "외국어")
+            ]
+        }
+    },
+    "12": {
+        "1학기": {
+            "국어/수학/영어": [
+                make_obj("21세기 문학탐구", "국어"), make_obj("고급 미적분", "수학"), 
+                make_obj("영어Ⅱ", "영어")
+            ],
+            "사회/과학": [
+                make_obj("윤리와 사상", "사회"), make_obj("역학과 에너지", "과학")
+            ],
+            "정보/예술/기타": [
+                make_obj("음악 연주와 창작", "예술"), make_obj("베트남어 회화", "외국어")
+            ]
+        },
+        "2학기": {
+            "국어/수학/영어": [
+                make_obj("문학과 여행", "국어"), make_obj("고급 대수", "수학"), 
+                make_obj("영어 발표와 토론", "영어")
+            ],
+            "사회/과학": [
+                make_obj("국제 관계의 이해", "사회"), make_obj("고급 물리", "과학")
+            ],
+            "정보/예술/기타": [
+                make_obj("Introduction to Engineering", "공학"), make_obj("비즈니스 엑셀", "기타")
+            ]
+        }
+    }
 }
 
-# 데이터 저장소
-student_submissions = {} # { student_id: {name, grade, semester, subjects, total_credits} }
-class_assignment_results = {} # 반 편성 결과 저장
+student_submissions = {}
 
 @app.route('/')
 def index():
@@ -29,9 +77,15 @@ def select_subjects():
     student_name = request.form.get('student_name')
     grade = request.form.get('grade')
     semester = request.form.get('semester')
+    
+    # 학년/학기에 맞는 데이터 가져오기
     subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
     target_credit = 28 if grade == "11" else 32
-    return render_template('select.html', student_id=student_id, student_name=student_name, grade=grade, semester=semester, subjects=subjects, target_credit=target_credit)
+    
+    return render_template('select.html', 
+                           student_id=student_id, student_name=student_name, 
+                           grade=grade, semester=semester, 
+                           subjects=subjects, target_credit=target_credit)
 
 @app.route('/submit', methods=['POST'])
 def submit():

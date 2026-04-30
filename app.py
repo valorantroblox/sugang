@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 app = Flask(__name__)
 app.secret_key = "kis_secret_key" # 팝업(flash) 메시지를 위해 필요함
 
-GAS_URL = "https://script.google.com/macros/s/AKfycbzH3UsmH5l0jCqkBEpXDrf4LEoON7-WGprnHDfo0ax_sS-kN7ZHvSkpejuQNURxgcFS/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlvHGiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?hl=ko&gid=0#gid=0" # 관리자용 링크
 
 SUBJECTS_DATA = {

@@ -141,12 +141,20 @@
                 <h5 class="category-title">📌 {{ cat }}</h5>
                 <div class="row row-cols-2 row-cols-md-3 g-3">
                     {% set cat_idx = loop.index0 %}
-                    {% for sub in list %}
-                    <div class="col">
-                        <input type="checkbox" name="selected_subjects" value="{{ sub }}" class="btn-check" id="sub-{{ cat_idx }}-{{ loop.index0 }}" onchange="updateUI()">
-                        <label class="subject-card" for="sub-{{ cat_idx }}-{{ loop.index0 }}">{{ sub }}</label>
+                    {% for subject in list %}
+                    <div class="col-12 col-md-6">
+                        <input type="checkbox" class="btn-check" id="sub-{{ loop.index0 }}-{{ category }}" name="selected_subjects" value="{{ subject.name }}" onchange="updateCredits()">
+                        <label class="btn btn-outline-primary subject-btn w-100" for="sub-{{ loop.index0 }}-{{ category }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    {{ subject.name }} 
+                                    <span class="badge rounded-pill bg-secondary ms-1" style="font-size: 0.7em;">{{ subject.type }}</span>
+                                </span>
+                                <span class="small">4학점</span>
+                            </div>
+                        </label>
                     </div>
-                    {% endfor %}
+{% endfor %}
                 </div>
             </div>
             {% endfor %}

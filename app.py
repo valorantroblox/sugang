@@ -1,14 +1,19 @@
 import requests
 import json
 import traceback
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-app.secret_key = "kis_secret_key" # 팝업(flash) 메시지를 위해 필요함
+# 팝업 메시지나 세션을 사용할 때 필요한 비밀키 (아무 문자나 넣어도 됨)
+app.secret_key = "kis_pilot_secret" 
 
-GAS_URL = "https://script.google.com/macros/s/AKfycbygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlvHGiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?hl=ko&gid=0#gid=0" # 관리자용 링크
+# 1. 구글 앱스 스크립트 배포 후 받은 웹 앱 URL을 여기에 넣으세요
+GAS_URL = "https://script.google.com/macros/s/AKfycbygSZnM6HeId6CCD15XWrYAkFFVrtXicP5zlvHGiUy9Hp9vdnkyAG_igsRF0nCDDkdV/exec"
 
+# 2. 관리자 페이지에서 바로 갈 구글 스프레드시트 주소를 여기에 넣으세요
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIWjQ_Fd2FDSwvcUXOeWXIcoM/edit"
+
+# 수강신청 과목 데이터
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -19,40 +24,100 @@ SUBJECTS_DATA = {
     }
 }
 
+# 관리자용 임시 메모리 저장소
+student_submissions = {}
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/select_subjects', methods=['POST'])
 def select_subjects():
-    student_id = request.form.get('student_id')
-    
-    # 1. 구글 시트에서 기존 학번 리스트 가져오기
     try:
-        response = requests.get(GAS_URL)
-        existing_ids = response.json() # ['10421', '10422', ...] 형태
-    except:
-        existing_ids = []
+        student_id = request.form.get('student_id')
+        student_name = request.form.get('student_name')
+        grade = request.form.get('grade')
+        semester = request.form.get('semester')
 
-    # 2. 중복 체크
-    if student_id in existing_ids:
-        # 이 메시지가 HTML의 alert 팝업으로 뜰 거야
-        return "<script>alert('이미 신청 완료된 학번입니다!'); window.location.href='/';</script>"
+        # --- 중복 신청 방지 로직 ---
+        try:
+            # 구글 시트에 이미 등록된 학번 리스트 가져오기 (GET 요청)
+            response = requests.get(GAS_URL, timeout=5)
+            existing_ids = response.json()
+            if student_id in existing_ids:
+                return f"<script>alert('{student_id} 학번은 이미 신청 완료되었습니다.'); window.location.href='/';</script>"
+        except Exception as e:
+            print(f"중복 체크 건너뜀 (구글 응답 없음): {e}")
+        # -------------------------
 
-    # 중복 아니면 과목 선택 페이지로 진행
-    grade = request.form.get('grade')
-    semester = request.form.get('semester')
-    student_name = request.form.get('student_name')
-    subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
-    target_credit = 28 if grade == "11" else 32
-    
-    return render_template('select.html', grade=grade, semester=semester, 
-                           student_id=student_id, student_name=student_name, 
-                           subjects=subjects, target_credit=target_credit)
+        subjects = SUBJECTS_DATA.get(grade, {}).get(semester, {})
+        target_credit = 28 if grade == "11" else 32
+        
+        return render_template('select.html', grade=grade, semester=semester, 
+                               student_id=student_id, student_name=student_name, 
+                               subjects=subjects, target_credit=target_credit)
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500
 
-# ... submit, result 등 기존 코드 동일 ...
+@app.route('/submit', methods=['POST'])
+def submit():
+    try:
+        student_id = request.form.get('student_id')
+        student_name = request.form.get('student_name')
+        selected_list = request.form.getlist('selected_subjects')
+        subjects_str = ", ".join(selected_list)
+        
+        if student_id:
+            # 1. 메모리에 임시 저장 (관리자용)
+            student_submissions[student_id] = {
+                'name': student_name,
+                'subjects': selected_list,
+                'total_credits': len(selected_list) * 4
+            }
+            
+            # 2. 구글 시트로 데이터 전송 (POST 요청)
+            payload = {
+                "student_id": student_id,
+                "student_name": student_name,
+                "subjects": subjects_str
+            }
+            requests.post(GAS_URL, data=json.dumps(payload), timeout=5)
+            
+        return redirect(url_for('result', student_id=student_id))
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500
+
+@app.route('/result/<student_id>')
+def result(student_id):
+    data = student_submissions.get(student_id, {})
+    return render_template('result.html', data=data)
 
 @app.route('/admin')
 def admin():
-    # 관리자 페이지에 시트 바로가기 링크 전달
-    return render_template('admin.html', sheet_url=SHEET_URL)
+    try:
+        return render_template('admin.html', 
+                               all_submissions=student_submissions, 
+                               class_results=None, 
+                               sheet_url=SHEET_URL)
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500
+
+@app.route('/assign_classes', methods=['POST'])
+def assign_classes():
+    try:
+        class_assignments = {}
+        for sid, info in student_submissions.items():
+            for subject in info.get('subjects', []):
+                if subject not in class_assignments:
+                    class_assignments[subject] = []
+                class_assignments[subject].append(f"{info['name']}({sid})")
+        
+        return render_template('admin.html', 
+                               all_submissions=student_submissions, 
+                               class_results=class_assignments, 
+                               sheet_url=SHEET_URL)
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>", 500
+
+if __name__ == '__main__':
+    app.run(debug=True)

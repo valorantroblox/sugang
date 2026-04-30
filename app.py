@@ -112,15 +112,43 @@ def admin():
 def assign_classes():
     try:
         class_assignments = {}
+        class_stats = {}
+        combination_stats = {} # 과목 조합 통계
+        
+        # 1. 반편성 및 인원 통계 계산
         for sid, info in student_submissions.items():
-            for subject in info.get('subjects', []):
+            current_student_subjects = info.get('subjects', [])
+            
+            # 과목별 명단 구성
+            for subject in current_student_subjects:
                 if subject not in class_assignments:
                     class_assignments[subject] = []
                 class_assignments[subject].append(f"{info['name']}({sid})")
-        
+            
+            # 2. 과목 조합 분석 (예: 화학을 듣는 애가 생명도 듣는가?)
+            for i in range(len(current_student_subjects)):
+                for j in range(i + 1, len(current_student_subjects)):
+                    # 과목 쌍을 이름순으로 정렬해서 '화학-생명'과 '생명-화학'을 같은 걸로 취급
+                    combo = tuple(sorted([current_student_subjects[i], current_student_subjects[j]]))
+                    combination_stats[combo] = combination_stats.get(combo, 0) + 1
+
+        # 인원수에 따른 분반 제안
+        for subject, students in class_assignments.items():
+            count = len(students)
+            if count >= 20: status, color = "분반 권장", "danger"
+            elif count <= 5: status, color = "폐강 위기", "warning"
+            else: status, color = "정상", "success"
+            class_stats[subject] = {"count": count, "status": status, "color": color}
+
+        # 가장 많이 겹치는 조합 TOP 3 추출
+        sorted_combos = sorted(combination_stats.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_combos = [{"subjects": f"{c[0][0]} + {c[0][1]}", "count": c[1]} for c in sorted_combos]
+
         return render_template('admin.html', 
                                all_submissions=student_submissions, 
-                               class_results=class_assignments, 
+                               class_results=class_assignments,
+                               class_stats=class_stats,
+                               top_combos=top_combos, # 인기 조합 데이터 추가
                                sheet_url=SHEET_URL)
     except Exception:
         return f"<pre>{traceback.format_exc()}</pre>", 500

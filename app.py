@@ -8,10 +8,10 @@ app = Flask(__name__)
 app.secret_key = "kis_pilot_secret" 
 
 # 1. 구글 앱스 스크립트 배포 후 받은 웹 앱 URL을 여기에 넣으세요
-GAS_URL = "https://script.google.com/macros/s/AKfycbygSZnM6HeId6CCD15XWrYAkFFVrtXicP5zlvHGiUy9Hp9vdnkyAG_igsRF0nCDDkdV/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycby87qx58UKlc--Lpqd6OpOe8l2_IJrEZb-gpduBVWpFZILe64joczwQjVKc5jPdLtO2/exec"
 
 # 2. 관리자 페이지에서 바로 갈 구글 스프레드시트 주소를 여기에 넣으세요
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIWjQ_Fd2FDSwvcUXOeWXIcoM/edit"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?hl=ko&gid=0#gid=0"
 
 # 수강신청 과목 데이터
 SUBJECTS_DATA = {

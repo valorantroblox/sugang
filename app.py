@@ -10,118 +10,175 @@ app.secret_key = "kis_secret_key"
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?gid=0#gid=0"
 GAS_URL = "https://script.google.com/macros/s/AKfycby87qx58UKlc--Lpqd6OpOe8l2_IJrEZb-gpduBVWpFZILe64joczwQjVKc5jPdLtO2/exec"
 
-# 과목 객체를 만드는 보조 함수
-def make_obj(name, sub_type):
-    return {"name": name, "type": sub_type}
+def make_obj(name, sub_type, category="일반"):
+    return {"name": name, "type": sub_type, "category": category}
 
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
             "국어": [
-                make_obj("문학과 콘텐츠", "국어"), make_obj("미디어와 국어생활", "국어"), make_obj("토론과 글쓰기", "국어")
+                make_obj("문학과 콘텐츠", "국어", "진로"), 
+                make_obj("미디어와 국어생활", "국어", "진로"), 
+                make_obj("토론과 글쓰기", "국어", "진로")
             ],
             "수학": [
-                make_obj("대수", "수학"), make_obj("미적분Ⅰ", "수학")
+                make_obj("대수", "수학", "일반"), 
+                make_obj("미적분Ⅰ", "수학", "일반")
             ],
             "영어": [
-                make_obj("Essential Academic Reading", "영어"), make_obj("Essential English Grammar", "영어"),
-                make_obj("Fundamentals of Psychology", "영어"), make_obj("Business Studies", "영어")
+                make_obj("Essential Academic Reading", "영어", "일반"), 
+                make_obj("Essential English Grammar", "영어", "일반"),
+                make_obj("Fundamentals of Psychology", "영어", "진로"), 
+                make_obj("Business Studies", "영어", "진로")
+            ],
+            "영어/과학": [ # 요청하신 영어/과학 별도 분류
+                make_obj("Introduction to Chemistry", "영어/과학", "융합"), 
+                make_obj("Introduction to Biology", "영어/과학", "융합")
             ],
             "과학": [
-                make_obj("물리학", "과학"), make_obj("화학", "과학"), make_obj("생명과학", "과학"),
-                make_obj("Introduction to Chemistry", "영어/과학"), make_obj("Introduction to Biology", "영어/과학")
+                make_obj("물리학", "과학", "일반"), 
+                make_obj("화학", "과학", "일반"), 
+                make_obj("생명과학", "과학", "일반")
             ],
             "사회": [
-                make_obj("세계사", "사회"), make_obj("사회와 문화", "사회"), make_obj("윤리문제 탐구", "사회"),
-                make_obj("기후 변화와 지속 가능한 세계", "사회")
+                make_obj("세계사", "사회", "일반"), 
+                make_obj("사회와 문화", "사회", "일반"), 
+                make_obj("윤리문제 탐구", "사회", "진로"),
+                make_obj("기후 변화와 지속 가능한 세계", "사회", "진로")
             ],
             "기타/외국어": [
-                make_obj("데이터 과학", "정보"), make_obj("AI뉴미디어 음악", "예술"),
-                make_obj("미술 전공 실기 기본", "예술"), make_obj("실용 베트남어", "외국어"),
-                make_obj("베트남의 지리와 역사", "외국어")
+                make_obj("데이터 과학", "정보", "진로"), 
+                make_obj("AI뉴미디어 음악", "예술", "융합"),
+                make_obj("미술 전공 실기 기본", "예술", "진로"), 
+                make_obj("실용 베트남어", "외국어", "일반"),
+                make_obj("베트남의 지리와 역사", "외국어", "진로")
             ]
         },
         "2학기": {
             "국어": [
-                make_obj("주제 탐구 독서", "국어"), make_obj("삶과 글쓰기", "국어"), make_obj("미디어와 비판적 사고", "국어")
+                make_obj("주제 탐구 독서", "국어", "진로"), 
+                make_obj("삶과 글쓰기", "국어", "진로"), 
+                make_obj("미디어와 비판적 사고", "국어", "진로")
             ],
             "수학": [
-                make_obj("확률과 통계", "수학"), make_obj("미적분Ⅱ", "수학")
+                make_obj("확률과 통계", "수학", "일반"), 
+                make_obj("미적분Ⅱ", "수학", "일반")
             ],
             "영어": [
-                make_obj("Practical Academic Reading", "영어"), make_obj("Practical English Grammar", "영어"),
-                make_obj("Psychology in Action", "영어"), make_obj("International Business", "영어")
+                make_obj("Practical Academic Reading", "영어", "일반"), 
+                make_obj("Practical English Grammar", "영어", "일반"),
+                make_obj("Psychology in Action", "영어", "진로"), 
+                make_obj("International Business", "영어", "진로")
+            ],
+            "영어/과학": [
+                make_obj("Introduction to Chemistry", "영어/과학", "융합"), 
+                make_obj("Introduction to Biology", "영어/과학", "융합")
             ],
             "과학": [
-                make_obj("세포와 물질대사", "과학"), make_obj("물질과 에너지", "과학"),
-                make_obj("물리학 실험", "과학"), make_obj("화학 실험", "과학"),
-                make_obj("Introduction to Chemistry", "영어/과학"), make_obj("Introduction to Biology", "영어/과학")
+                make_obj("세포와 물질대사", "과학", "진로"), 
+                make_obj("물질과 에너지", "과학", "진로"),
+                make_obj("물리학 실험", "과학", "진로"), 
+                make_obj("화학 실험", "과학", "진로")
             ],
             "사회": [
-                make_obj("현대사회와 윤리", "사회"), make_obj("세계 시민과 지리", "사회"), make_obj("경제", "사회"), make_obj("정치", "사회")
+                make_obj("현대사회와 윤리", "사회", "진로"), 
+                make_obj("세계 시민과 지리", "사회", "진로"), 
+                make_obj("경제", "사회", "일반"), 
+                make_obj("정치", "사회", "일반")
             ],
             "기타/외국어": [
-                make_obj("소프트웨어와 생활", "정보"), make_obj("포스트모던음악", "예술"),
-                make_obj("미술 전공 실기 응용", "예술"), make_obj("실용 베트남어", "외국어"),
-                make_obj("베트남의 사회와 문화", "외국어")
+                make_obj("소프트웨어와 생활", "정보", "진로"), 
+                make_obj("포스트모던음악", "예술", "융합"),
+                make_obj("미술 전공 실기 응용", "예술", "진로"), 
+                make_obj("실용 베트남어", "외국어", "일반"),
+                make_obj("베트남의 사회와 문화", "외국어", "진로")
             ]
         }
     },
     "12": {
         "1학기": {
             "국어": [
-                make_obj("21세기 문학탐구", "국어"), make_obj("미디어와 창의적 표현", "국어"), make_obj("심층 융합 독서", "국어")
+                make_obj("21세기 문학탐구", "국어", "진로"), 
+                make_obj("미디어와 창의적 표현", "국어", "진로"), 
+                make_obj("심층 융합 독서", "국어", "융합")
             ],
             "수학": [
-                make_obj("고급 미적분", "수학"), make_obj("수학과제 탐구", "수학"), make_obj("기하", "수학"), make_obj("인공지능 수학", "수학")
+                make_obj("고급 미적분", "수학", "진로"), 
+                make_obj("수학과제 탐구", "수학", "진로"), 
+                make_obj("기하", "수학", "일반"), 
+                make_obj("인공지능 수학", "수학", "융합")
             ],
             "영어": [
-                make_obj("영어Ⅱ", "영어"), make_obj("Critical Literacy in English", "영어"),
-                make_obj("English Literature", "영어"), make_obj("History of Early Civilizations", "영어")
+                make_obj("영어Ⅱ", "영어", "일반"), 
+                make_obj("Critical Literacy in English", "영어", "진로"),
+                make_obj("English Literature", "영어", "진로"), 
+                make_obj("History of Early Civilizations", "영어", "융합")
             ],
             "과학": [
-                make_obj("역학과 에너지", "과학"), make_obj("전자기와 양자", "과학"),
-                make_obj("화학 반응의 세계", "과학"), make_obj("생물의 유전", "과학"), make_obj("과학과제 연구", "과학")
+                make_obj("역학과 에너지", "과학", "진로"), 
+                make_obj("전자기와 양자", "과학", "진로"),
+                make_obj("화학 반응의 세계", "과학", "진로"), 
+                make_obj("생물의 유전", "과학", "진로"), 
+                make_obj("과학과제 연구", "과학", "진로")
             ],
             "사회": [
-                make_obj("윤리와 사상", "사회"), make_obj("한국지리 탐구", "사회"), make_obj("법과 사회", "사회"), make_obj("사회문제 탐구", "사회")
+                make_obj("윤리와 사상", "사회", "일반"), 
+                make_obj("한국지리 탐구", "사회", "진로"), 
+                make_obj("법과 사회", "사회", "진로"), 
+                make_obj("사회문제 탐구", "사회", "진로")
             ],
             "기타/외국어": [
-                make_obj("음악 연주와 창작", "예술"), make_obj("미술 전공 실기 심화", "예술"),
-                make_obj("정보과학 과제연구", "정보"), make_obj("베트남어 회화", "외국어"),
-                make_obj("시사 베트남어", "외국어")
+                make_obj("음악 연주와 창작", "예술", "진로"), 
+                make_obj("미술 전공 실기 심화", "예술", "진로"),
+                make_obj("정보과학 과제연구", "정보", "진로"), 
+                make_obj("베트남어 회화", "외국어", "진로"),
+                make_obj("시사 베트남어", "외국어", "진로")
             ]
         },
         "2학기": {
             "국어": [
-                make_obj("문학과 여행", "국어"), make_obj("프레젠테이션 화법", "국어"), make_obj("글로벌 이슈 글쓰기", "국어")
+                make_obj("문학과 여행", "국어", "진로"), 
+                make_obj("프레젠테이션 화법", "국어", "진로"), 
+                make_obj("글로벌 이슈 글쓰기", "국어", "융합")
             ],
             "수학": [
-                make_obj("고급 대수", "수학"), make_obj("실용 통계", "수학"), make_obj("수학 실험", "수학")
+                make_obj("고급 대수", "수학", "진로"), 
+                make_obj("실용 통계", "수학", "진로"), 
+                make_obj("수학 실험", "수학", "진로")
             ],
             "영어": [
-                make_obj("영어 발표와 토론", "영어"), make_obj("Contemporary Literacy in English", "영어"),
-                make_obj("American Literature", "영어"), make_obj("Adventures in World History", "영어")
+                make_obj("영어 발표와 토론", "영어", "진로"), 
+                make_obj("Contemporary Literacy in English", "영어", "진로"),
+                make_obj("American Literature", "영어", "진로"), 
+                make_obj("Adventures in World History", "영어", "융합")
             ],
             "과학": [
-                make_obj("고급 물리", "과학"), make_obj("고급 화학", "과학"),
-                make_obj("생명과학 실험", "과학"), make_obj("융합과학 탐구", "과학"),
-                make_obj("Comprehensive Chemistry", "과학"), make_obj("Comprehensive Biology", "과학")
+                make_obj("고급 물리", "과학", "진로"), 
+                make_obj("고급 화학", "과학", "진로"),
+                make_obj("생명과학 실험", "과학", "진로"), 
+                make_obj("융합과학 탐구", "과학", "융합"),
+                make_obj("Comprehensive Chemistry", "과학", "진로"), 
+                make_obj("Comprehensive Biology", "과학", "진로")
             ],
             "사회": [
-                make_obj("국제 관계의 이해", "사회"), make_obj("인문학과 윤리", "사회"), make_obj("여행지리", "사회"),
-                make_obj("역사로 탐구하는 현대 세계", "사회"), make_obj("금융과 경제생활", "사회")
+                make_obj("국제 관계의 이해", "사회", "진로"), 
+                make_obj("인문학과 윤리", "사회", "융합"), 
+                make_obj("여행지리", "사회", "진로"),
+                make_obj("역사로 탐구하는 현대 세계", "사회", "진로"), 
+                make_obj("금융과 경제생활", "사회", "진로")
             ],
             "기타/외국어": [
-                make_obj("Introduction to Engineering", "공학"), make_obj("Comprehensive Engineering", "공학"),
-                make_obj("음악 감상과 비평", "예술"), make_obj("미술 감상과 비평", "예술"),
-                make_obj("비즈니스 엑셀", "기타"), make_obj("베트남어 회화", "외국어"),
-                make_obj("베트남 사회문화탐구", "외국어")
+                make_obj("Introduction to Engineering", "공학", "융합"), 
+                make_obj("Comprehensive Engineering", "공학", "융합"),
+                make_obj("음악 감상과 비평", "예술", "일반"), 
+                make_obj("미술 감상과 비평", "예술", "일반"),
+                make_obj("비즈니스 엑셀", "기타", "진로"), 
+                make_obj("베트남어 회화", "외국어", "진로"),
+                make_obj("베트남 사회문화탐구", "외국어", "진로")
             ]
         }
     }
 }
-
 student_submissions = {}
 class_assignment_results = {}
 

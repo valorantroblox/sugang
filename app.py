@@ -9,7 +9,7 @@ app.secret_key = "kis_secret_key"
 # --- 설정 데이터 ---
 GAS_URL = "https://script.google.com/macros/s/AKfybygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlVHiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
 
-# --- 과목 데이터 (11학년 & 12학년 사진 반영) ---
+# --- 과목 데이터 (생략 없이 그대로 사용해) ---
 SUBJECTS_DATA = {
     "11": {
         "1학기": {
@@ -62,6 +62,10 @@ def submit():
         semester = request.form.get('semester')
         selected_list = request.form.getlist('selected_subjects')
         
+        # 500 에러 방지: 데이터가 정상적으로 들어왔는지 확인
+        if not student_id:
+            return "Error: Student ID is missing", 400
+
         student_submissions[student_id] = {
             'name': student_name, 'grade': grade, 'semester': semester,
             'subjects': selected_list, 'total_credits': len(selected_list) * 4
@@ -78,8 +82,11 @@ def submit():
 
 @app.route('/result/<student_id>')
 def result(student_id):
+    # 중요! result.html에서 'data'라는 이름을 쓰므로 여기서 data=info로 넘겨줘야 함
     info = student_submissions.get(student_id)
-    return render_template('result.html', info=info)
+    if not info:
+        return "데이터를 찾을 수 없습니다.", 404
+    return render_template('result.html', data=info) # info를 data라는 이름으로 전달
 
 if __name__ == '__main__':
     app.run(debug=True)

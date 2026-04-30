@@ -7,8 +7,8 @@ app.secret_key = "kis_secret_key"
 
 # --- 설정 데이터 ---
 # 구글 시트 주소 (네 시트 주소로 바꿔줘)
-SHEET_URL = "https://docs.google.com/spreadsheets/d/your_sheet_id_here"
-GAS_URL = "https://script.google.com/macros/s/AKfybygSZnM6HeId6CCD15XwRyAKfFVrtXicP5zlVHiUy9Hp9vdnkyAG_igsRF0ncDDkdV/exec"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1fM3e_ELwfhhW45zLqXZIwjQ_Fd2FDSwwcUXOeWxICoM/edit?gid=0#gid=0"
+GAS_URL = "https://script.google.com/macros/s/AKfycby87qx58UKlc--Lpqd6OpOe8l2_IJrEZb-gpduBVWpFZILe64joczwQjVKc5jPdLtO2/exec"
 
 # 과목 객체를 만드는 보조 함수 (네 HTML 디자인 유지용)
 def make_obj(name, sub_type="전공선택"):

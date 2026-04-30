@@ -24,7 +24,7 @@
 <div class="container">
     <div class="d-flex justify-content-between mb-4">
         <form action="/assign_classes" method="post">
-            <button type="submit" class="btn btn-assign shadow-sm">🚀 반 편성 자동 실행</button>
+            <button type="submit" class="btn btn-assign shadow-sm"> 반 편성 자동 실행</button>
         </form>
         <a href="/download_excel" class="btn btn-outline-dark">엑셀 다운로드</a>
     </div>
@@ -32,12 +32,12 @@
     {% if class_results %}
     <div class="card mb-5 border-start border-5 border-warning">
         <div class="card-body">
-            <h4 class="fw-bold text-dark mb-4">✨ 과목별 분반 결과</h4>
+            <h4 class="fw-bold text-dark mb-4">과목별 분반 결과</h4>
             <div class="row">
                 {% for subject, students in class_results.items() %}
                 <div class="col-md-4 mb-3">
                     <div class="p-3 bg-white border rounded shadow-sm">
-                        <h6 class="fw-bold text-primary">📘 {{ subject }}</h6>
+                        <h6 class="fw-bold text-primary">{{ subject }}</h6>
                         <hr>
                         <p class="small mb-0 text-muted">인원: {{ students|length }}명</p>
                         <p class="mb-0">{{ students | join(', ') }}</p>
